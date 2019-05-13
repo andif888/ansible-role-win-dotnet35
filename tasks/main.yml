@@ -1,0 +1,24 @@
+---
+# tasks file for ansible-role-win-dotnet35
+- name: Download Windows Server ISO
+  win_get_url:
+    url: '{{ windows_server_iso_url }}'
+    dest: C:\Windows\Temp\windows_server.iso
+    force: no
+
+- name: Mount Windows Server ISO
+  win_disk_image:
+    image_path: C:\Windows\Temp\windows_server.iso
+    state: present
+  register: disk_image_out
+
+- name: Install Net-Framework-Core Features
+  win_feature:
+    name: Net-Framework-Core
+    source: '{{ disk_image_out.mount_path }}\sources\sxs'
+    state: present
+
+- name: Umount Windows Server ISO
+  win_disk_image:
+    image_path: C:\Windows\Temp\windows_server.iso
+    state: absent

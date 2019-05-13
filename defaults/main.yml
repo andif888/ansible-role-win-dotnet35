@@ -1,0 +1,3 @@
+---
+# defaults file for ansible-role-win-dotnet35
+windows_server_iso_url: https://localhost/en_windows_server_2012_r2_with_update_x64_dvd_6052708.iso
