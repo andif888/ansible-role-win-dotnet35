@@ -12,11 +12,26 @@
     state: present
   register: disk_image_out
 
+- name: Sleep for 2 seconds and continue with play
+  wait_for:
+    timeout: 2
+  delegate_to: localhost
+
+# mount_paths[] !!!
+
+- name: Install Net-Framework-Core Features (ansible < 2.10)
+  win_feature:
+    name: Net-Framework-Core
+    source: '{{ disk_image_out.mount_path }}sources\sxs'
+    state: present
+  when: ansible_version.full is version_compare('2.10', '<') 
+
 - name: Install Net-Framework-Core Features
   win_feature:
     name: Net-Framework-Core
-    source: '{{ disk_image_out.mount_path }}\sources\sxs'
+    source: '{{ disk_image_out.mount_paths[0] }}sources\sxs'
     state: present
+  when: ansible_version.full is version_compare('2.10', '>=')
 
 - name: Umount Windows Server ISO
   win_disk_image:
