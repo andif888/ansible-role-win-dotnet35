@@ -26,7 +26,7 @@
     state: present
   when: ansible_version.full is version_compare('2.10', '<') 
 
-- name: Install Net-Framework-Core Features
+- name: Install Net-Framework-Core Features (ansible >= 2.10)
   win_feature:
     name: Net-Framework-Core
     source: '{{ disk_image_out.mount_paths[0] }}sources\sxs'
