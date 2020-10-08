@@ -23,6 +23,11 @@
     dest: C:\Windows\Temp\windows_server.iso
     force: no
 
+- name: Sleep for 2 seconds and continue with play
+  wait_for:
+    timeout: 2
+  delegate_to: localhost
+
 - name: Mount Windows Server ISO
   win_disk_image:
     image_path: C:\Windows\Temp\windows_server.iso
