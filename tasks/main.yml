@@ -3,8 +3,9 @@
   ansible.windows.win_service:
     name: wuauserv
   register: wuauserv_state
-  
-- debug:
+
+- name: Debug wuauserv_state.start_mode
+  ansible.builtin.debug:
     var: wuauserv_state.start_mode
 
 - name: Set wuauserv start_mode=manual
@@ -14,50 +15,53 @@
   register: wuauserv_state_modified
   when: wuauserv_state.start_mode == 'disabled'
 
-  
+- name: Ensure extract dir exists
+  ansible.windows.win_file:
+    path: '{{ windows_server_extract_dir }}'
+    state: directory
+
 
 # tasks file for ansible-role-win-dotnet35
 - name: Download Windows Server ISO
-  win_get_url:
+  ansible.windows.win_get_url:
     url: '{{ windows_server_iso_url }}'
-    dest: C:\Windows\Temp\windows_server.iso
+    dest: '{{ windows_server_iso_file_path }}'
+    validate_certs: '{{ windows_server_iso_url_validate_certs }}'
     force: no
 
-- name: Sleep for 2 seconds and continue with play
-  wait_for:
-    timeout: 2
-  delegate_to: localhost
+- name: Sleep for 5 seconds and continue with play
+  ansible.windows.win_wait_for:
+    timeout: 5
 
 - name: Mount Windows Server ISO
-  win_disk_image:
-    image_path: C:\Windows\Temp\windows_server.iso
+  community.windows.win_disk_image:
+    image_path: '{{ windows_server_iso_file_path }}'
     state: present
   register: disk_image_out
 
-- name: Sleep for 2 seconds and continue with play
-  wait_for:
-    timeout: 2
-  delegate_to: localhost
+- name: Sleep for 5 seconds and continue with play
+  ansible.windows.win_wait_for:
+    timeout: 5
 
 # mount_paths[] !!!
 
 - name: Install Net-Framework-Core Features (ansible < 2.10)
-  win_feature:
+  ansible.windows.win_feature:
     name: Net-Framework-Core
     source: '{{ disk_image_out.mount_path }}sources\sxs'
     state: present
-  when: ansible_version.full is version_compare('2.10', '<') 
+  when: ansible_version.full is version_compare('2.10', '<')
 
 - name: Install Net-Framework-Core Features (ansible >= 2.10)
-  win_feature:
+  ansible.windows.win_feature:
     name: Net-Framework-Core
     source: '{{ disk_image_out.mount_paths[0] }}sources\sxs'
     state: present
   when: ansible_version.full is version_compare('2.10', '>=')
 
 - name: Umount Windows Server ISO
-  win_disk_image:
-    image_path: C:\Windows\Temp\windows_server.iso
+  community.windows.win_disk_image:
+    image_path: '{{ windows_server_iso_file_path }}'
     state: absent
 
 - name: Restore wuauserv start_mode={{ wuauserv_state.start_mode }}
@@ -65,3 +69,8 @@
     name: wuauserv
     start_mode: '{{ wuauserv_state.start_mode }}'
   when: wuauserv_state_modified.changed
+
+- name: Ensure extract dir absent
+  ansible.windows.win_file:
+    path: '{{ windows_server_extract_dir }}'
+    state: absent
